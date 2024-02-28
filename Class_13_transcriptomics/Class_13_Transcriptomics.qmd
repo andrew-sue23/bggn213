@@ -1,0 +1,233 @@
+---
+title: "Class 13: Transcriptomics"
+author: "Andrew Sue"
+format: pdf
+editor: visual
+---
+
+```{r}
+library(BiocManager)
+library(DESeq2)
+```
+
+#Import countData and colData
+
+DESeq2 Required Inputs: As input, the DESeq2 package expects (1) a data.frame of count data (as obtained from RNA-seq or another high-throughput sequencing experiment) and (2) a second data.frame with information about the samples - often called sample metadata (or colData in DESeq2-speak because it supplies metadata/information about the columns of the countData matrix) (Figure 2).
+
+```{r}
+counts <- read.csv("airway_scaledcounts.csv", row.names=1)
+metadata <-  read.csv("airway_metadata.csv")
+```
+
+```{r}
+head(counts)
+head(metadata)
+```
+
+```{r}
+# View(counts)
+# View(metadata)
+```
+
+> Q1. How many genes are in this dataset?
+
+```{r}
+nrow(counts)
+```
+
+> Q. How many cell lines are there?
+
+```{r}
+ncol(counts)
+```
+
+> Q2. How many ‘control’ cell lines do we have?
+
+There are 4 control cell lines.
+
+```{r}
+table(metadata$dex)
+# or 
+sum(metadata$dex == "control")
+```
+
+Lets verify that the metadata names match the counts name. (The cell line names are the same)
+
+```{r}
+colnames(counts) == metadata$id #verify that the columns are in the same order 
+```
+
+Can also use the `all()` function, a common flow-control function to verify if your statements are true.
+
+```{r}
+all(colnames(counts) == metadata$id) #verify that the columns are in the same order
+```
+
+What do we want to compare? We would like to first start with the mean of gene expression between the control groups and the treatmetn group. So we must subset all the control data and treatment data into separate groups.
+
+```{r}
+control_inds <- metadata$dex == "control" #gives us the indexes (column position) of everything that equals control 
+control_counts <- counts[,control_inds] #applies that indexes to the data and puts into a new dataset 
+control_means <- apply(control_counts, 1, mean) #apply mean function across the rows of the dataset
+```
+
+Lets do the same for the treated group.
+
+```{r}
+treated_inds <- metadata$dex == "treated"
+treated_counts <- counts[,treated_inds]
+treated_means <- apply(treated_counts, 1, mean)
+```
+
+Lets combine them back together for data saving purposes.
+
+```{r}
+mean_counts <- data.frame(control_means, treated_means)
+```
+
+> Q5 (a). Create a scatter plot showing the mean of the treated samples against the mean of the control samples. Your plot should look something like the following.
+
+```{r}
+plot(mean_counts)
+```
+
+> Q5(B) You could also use the ggplot2 package to make this figure producing the plot below. What geom\_?() function would you use for this plot?
+
+geom_point
+
+```{r}
+head(mean_counts)
+```
+
+We have such skewed data that we need to adjust the axis to see more of the data.
+
+```{r}
+plot(mean_counts, log = "xy")
+```
+
+We can look at differences here via a fraction between conditions in the data to give us log-fold changes in expression.
+
+```{r}
+mean_counts$log_change <- log2(treated_means/control_means)
+```
+
+We have data that has no values, thus giving us weird log values. So lets filter out that data to only use the data that makes sense.
+
+```{r}
+zero.sums <- (rowSums(mean_counts[,1:2] == 0)) #turn into a logical finding everything in the two columns that equals 0
+to.rm.ind <- zero.sums > 0 #gives us opposide of what we want
+my_counts<- mean_counts[!to.rm.ind,] #exclamation point switches the logicals
+```
+
+A common threshold for calling something "differentially expressed" is a log2 fold-change value of +2 or -2.
+
+How many of our remaining genes are "up" regulated?
+
+> Q8. Using the up.ind vector above can you determine how many up regulated genes we have at the greater than 2 fc level?
+
+```{r}
+sum(my_counts$log_change >= +2)
+```
+
+> Q9. Using the down.ind vector above can you determine how many down regulated genes we have at the greater than 2 fc level?
+
+```{r}
+sum(my_counts$log_change <= -2)
+```
+
+> Q10. Do you trust these results? Why or why not?
+
+No I do not since we havent accounted for significance and this was taken across the mean of the samples.
+
+#DESeq2 Analysis
+
+Lets use the DESeq2 package to do this anaylsis properly. DESeq requires a specific format of your data to be compatible.
+
+```{r}
+dds<- DESeqDataSetFromMatrix(counts, metadata, ~dex)
+```
+
+```{r}
+dds<- DESeq(dds)
+```
+
+```{r}
+res <- results(dds)
+head(res)
+```
+
+## Volcano plot
+
+A common visualization for this type of data is called a volcano plot.
+
+```{r}
+plot(res$log2FoldChange, -log(res$padj), ylab = "-log(P-Value)", xlab = "log2(Fold-change)")
+abline(v=-2, col = "red")
+abline(v=+2, col ="red")
+abline(h = -log(0.05), col = "red")
+```
+
+Save our results thus far. Thus far it has not been filtered or annotated, so not very useful as is.
+
+```{r}
+write.csv(res, file = "myresults.csv")
+```
+
+# Adding annotations
+
+Lets add the proper gene names to the dataset that we can evaluate and reference known pathways later.
+
+Our table thus far contains the Ensembl gene IDs, but are not the actual gene names. So we can use some packages to aid us in translating these IDs into their gene names.
+
+```{r}
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+
+columns(org.Hs.eg.db) #These are all the databases useable to reference
+```
+
+The main function we will use from the AnnotationDbi package is called `mapIds()`.
+
+We can use the `mapIds()` function to add individual columns to our results table. We provide the row names of our results table as a key, and specify that keytype=ENSEMBL. The column argument tells the `mapIds()` function which information we want, and the multiVals argument tells the function what to do if there are multiple possible values for a single input value. Here we ask to just give us back the first one that occurs in the database.
+
+```{r}
+res$symbol <- mapIds(org.Hs.eg.db,
+                     keys=row.names(res), # Our genenames
+                     keytype="ENSEMBL", # The format of our genenames
+                     column="SYMBOL", # The new format we want to add
+                     multiVals="first") #default is first but can be changed
+
+head(res)
+```
+
+Run it again and add the GENENAME, ENTREZ and UNIPROT names
+
+```{r}
+res$entrez <- mapIds(org.Hs.eg.db,
+                     keys=row.names(res), # Our genenames
+                     column="ENTREZID", # The new format we want to add
+                     keytype="ENSEMBL", # The format of our genenames
+                     multiVals="first")
+
+res$uniprot <- mapIds(org.Hs.eg.db,
+                     keys=row.names(res),
+                     column="UNIPROT",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+
+res$genename <- mapIds(org.Hs.eg.db,
+                     keys=row.names(res),
+                     column="GENENAME",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+```
+
+Finally, lets resave our data with all the proper tags.
+
+```{r}
+write.csv(res, file = "myresults.csv")
+```
+
+# Kegg pathways graphs
+
+Kegg pathways speak entrez, so its important for our gene data to have the Entrez ID.
