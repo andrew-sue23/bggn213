@@ -1,0 +1,252 @@
+---
+title: "Class 14: RNAseq mini project"
+author: "Andrew Sue"
+format: pdf
+editor: visual
+---
+## Data import 
+
+Must import data (metadate and counts)
+
+```{r}
+counts <- read.csv("GSE37704_featurecounts.csv", row.names = 1)
+metadata <- read.csv("GSE37704_metadata.csv")
+```
+
+```{r}
+head(counts)
+head(metadata)
+```
+
+## Data exploration and format confirmation 
+
+Now lets confirm data is in the right order/format to associate between files.
+
+```{r dataimport}
+all(colnames(counts) == metadata$id)
+```
+
+> Q. Complete the code below to remove the troublesome first column from countData
+
+```{r format verification}
+#Delete the length column since we dont really need it. 
+
+countData <- counts[,-1]
+all(colnames(countData) == metadata$id)
+```
+
+## Setup for DESeq2 
+
+Now lets pre-filter the data and remove all the zero data. 
+
+>Q. Complete the code below to filter countData to exclude genes (i.e. rows) where we have 0 read count across all samples (i.e. columns).
+
+```{r}
+inds <- rowSums(countData) > 0 #takes the indexees of nonzero values
+non.zero.counts <- countData[inds,] #finds those in the data to make new dataaset 
+head(non.zero.counts) #visualize it worked 
+```
+
+Lets look at the number of genes left.
+
+```{r}
+nrow(non.zero.counts)
+```
+
+## DESeq analysis 
+
+```{r}
+#/ message: false #This removes the library load message from appearing
+library(DESeq2)
+```
+
+```{r}
+dds <- DESeqDataSetFromMatrix(non.zero.counts, metadata, ~condition) #Design is what the colData reperesents to the countData
+```
+
+## Result extraction and visualization 
+
+```{r}
+dds <- DESeq(dds)
+```
+
+```{r}
+res <- results(dds)
+head(res)
+```
+
+```{r}
+library(ggplot2)
+library(ggrepel)
+```
+
+```{r}
+#ggplot requires everything to be a dataframe (not just values)
+res2 <- as.data.frame(res)
+```
+
+```{r}
+ggplot(res2) +
+  aes(log2FoldChange, -log(padj)) + 
+  geom_point() + 
+  theme_classic()
+```
+
+Lets add color to it. We cannot set variables to it as there is no distinguishing category to actually be able to set default colors. Therefore, we must make our own color settings. 
+
+```{r}
+mycols <- rep("gray", nrow(res2)) #make entire dataframe one color to start
+mycols[abs(res2$log2FoldChange) > 2] <- "blue" #sets the fold change we care about
+mycols[res2$padj > 0.05] <- "red" #sets the p-value significance of 0.05 
+```
+
+```{r}
+ggplot(res2) +
+  aes(log2FoldChange, -log(padj)) + 
+  geom_point(col = mycols) + 
+  theme_classic()
+```
+
+# Annotation
+Now we want to know what the points are. So we need to annotate our data using the `AnnotationDBI` and our database package that it will pull from. 
+
+```{r}
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+```
+
+```{r}
+columns(org.Hs.eg.db) #These are all the databases useable to reference
+```
+
+We can use these "columns" within `mapIds()` function to translate the ENS IDs into what we want. 
+
+```{r}
+res2$symbol <- mapIds(org.Hs.eg.db,
+                     keys=row.names(res2), # Our gene names
+                     keytype="ENSEMBL", # The format of our gene names
+                     column="SYMBOL", # The new format we want to add
+                     multiVals="first") #default is first but can be changed
+
+res2$entrez <- mapIds(org.Hs.eg.db,
+                     keys=row.names(res2), # Our gene names
+                     keytype="ENSEMBL", # The format of our gene names
+                     column="ENTREZID", # The new format we want to add
+                     multiVals="first")
+
+res2$uniprot <- mapIds(org.Hs.eg.db,
+                     keys=row.names(res2),
+                     keytype="ENSEMBL",
+                     column="UNIPROT",
+                     multiVals="first")
+
+res2$genename <- mapIds(org.Hs.eg.db,
+                     keys=row.names(res2),
+                     keytype="ENSEMBL",
+                     column="GENENAME",
+                     multiVals="first")
+```
+
+```{r}
+head(res2)
+res2 = res2[order(res$pvalue),]
+write.csv(res2, file ="deseq_results.csv")
+```
+
+## Pathway analysis (KEGG and GO analysis and graphs)
+
+BiocManager::install(c("pathview", "gage", "gageData"))
+
+```{r}
+#/ message: false
+library(pathview)
+library(gage)
+library(gageData)
+```
+
+Gage function wants as input of a vector, in this case, fold changes with names of the genes in a format that matches the database/geneset we are going to use. 
+
+```{r}
+data(kegg.sets.hs)
+data(sigmet.idx.hs)
+
+# Focus on signaling and metabolic pathways only
+kegg.sets.hs = kegg.sets.hs[sigmet.idx.hs]
+
+# Examine the first 3 pathways
+head(kegg.sets.hs, 3)
+```
+
+```{r}
+foldchanges <- res2$log2FoldChange
+names(foldchanges) <- res2$entrez
+head(foldchanges)
+```
+
+```{r}
+ # Get the results
+keggres = gage(foldchanges, gsets=kegg.sets.hs)
+```
+
+```{r}
+attributes(keggres)
+```
+
+```{r}
+# Look at the first few down (less) pathways
+head(keggres$less)
+```
+
+```{r}
+pathview(gene.data=foldchanges, pathway.id="hsa04110")
+```
+
+```{r}
+# A different PDF based output of the same data
+pathview(gene.data=foldchanges, pathway.id="hsa04110", kegg.native=FALSE)
+```
+
+```{r}
+## Focus on top 5 upregulated pathways here for demo purposes only
+keggrespathways <- rownames(keggres$greater)[1:5]
+
+# Extract the 8 character long IDs part of each string
+keggresids = substr(keggrespathways, start=1, stop=8)
+keggresids
+```
+
+```{r}
+pathview(gene.data=foldchanges, pathway.id=keggresids, species="hsa")
+```
+
+## Gene ontology (GO)
+
+```{r}
+data(go.sets.hs)
+data(go.subs.hs)
+
+# Focus on Biological Process subset of GO
+gobpsets <- go.sets.hs[go.subs.hs$BP]
+
+gobpres <- gage(foldchanges, gsets=gobpsets, same.dir=TRUE)
+
+lapply(gobpres, head)
+```
+
+## Reactome analysis
+
+We need a list of genes as a text file for using the reactome online site 
+
+Let's start with our genes that haev a abs(logFC) > 2 and a P-value < 0.05.
+
+```{r}
+inds <- abs(res2$log2FoldChange) > 2 & (res2$padj < 0.05)
+mygenes <- res2$symbol[inds]
+cat(head(mygenes), sep= "\n")
+```
+
+```{r}
+write.table(mygenes, file = "mygenes.txt", quote = FALSE, row.names = FALSE, col.names = FALSE)
+```
+
+![](R-HSA-68886.png)

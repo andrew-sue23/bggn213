@@ -1,0 +1,74 @@
+---
+title: "Class 11: Genome Informatics"
+author: "Andrew Sue"
+format: pdf
+editor: visual
+---
+We are reading in the Mexican American Ancestry data for the SNPs associated with childhood asthma.
+
+> Q1. What are those 4 candidate SNPs?
+
+rs12936231, rs8067378, rs9303277, and rs7216389
+
+> Q2. What three genes do these variants overlap or effect?
+
+ZPBP2, IKZF3, GSDMB
+
+> Q3. What is the location of rs8067378 and what are the different alleles for rs8067378?
+
+Location: Chromosome 17:39895095 
+
+> Q4: Name at least 3 downstream genes for rs8067378?
+
+Genes GSDMB, GSDMA and PSMD3. 
+
+```{r}
+mxn_data <- read.csv("Asthma_genotypes.csv", row.names = 1)
+mxn_data
+```
+
+> Q5. What proportion of the Mexican Ancestry in Los Angeles sample population (MXL) are
+homozygous for the asthma associated SNP (G|G)?
+
+14% G|G phenotype. 
+```{r}
+table(mxn_data$Genotype..forward.strand.) / nrow(mxn_data) * 100
+```
+
+> Q6. Back on the ENSEMBLE page, use the “search for a sample” field above to find the
+particular sample HG00109. This is a male from the GBR population group. What is the
+genotype for this sample?
+
+The genotype of this sample is *G|G*
+
+We are reading in now the GBR dataset and finding the HG00109 sample. 
+
+```{r}
+gbr <- read.csv("Asthma_genotypes_gbr.csv", row.names = 1)
+
+table(gbr$Genotype..forward.strand.) / nrow(gbr) * 100
+```
+
+To compare the gene expression of the entire population, we will take the population data. 
+
+```{r}
+expr <- read.table("gene_expression.txt")
+head(expr)
+```
+
+```{r}
+nrow(expr)
+```
+
+```{r}
+table(expr$geno)
+```
+
+Lets make a summary plot (boxplot) of the data
+
+```{r}
+library(ggplot2)
+
+ggplot(expr) + aes(geno, exp, fill = geno) + geom_boxplot(notch = TRUE)
+```
+

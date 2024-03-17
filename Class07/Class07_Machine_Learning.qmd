@@ -1,0 +1,222 @@
+---
+title: "Class 7: Machine Learning"
+format: pdf
+editor: visual
+---
+
+Today we are going to explore some core machine learning methods. Namely clustering and dimensionality.
+
+# Kmeans clustering
+
+The main function for k-means in "base" R is called `kmeans()`. Let's first make up some data to see how kmeans works and to get aat the results.
+
+```{r}
+hist( rnorm(50000) )
+
+hist( rnorm(50000, mean =3) )
+```
+
+Make a vector with 60 total points, half centered at +3 and half at -3.
+
+```{r}
+a <- rnorm(30, mean=3)
+b <- rnorm(30, mean=-3)
+c<-c(a,b)
+c
+```
+
+Can shorten code doing this way.
+
+```{r}
+tmp <- c(rnorm(30,3),rnorm(30,-3))
+```
+
+Get the reverse to make another vector
+
+```{r}
+x <- cbind(tmp,y=rev(tmp))
+plot(x)
+```
+
+Now run the Kmeans function to see how they cluster
+
+```{r}
+k <-kmeans(x,centers = 2, nstart=20)
+k
+```
+
+Whats in this results?
+
+```{r}
+attributes(k)
+```
+
+What are the cluster centers?
+
+```{r}
+k$centers
+```
+
+What are the clustering results?
+
+```{r}
+k$cluster
+```
+
+> Q. Plot your data `x` showing your clustering results and the center point for each cluster?
+
+```{r}
+plot(x, col=k$cluster)
+points(k$centers, pch=15, col="green")
+```
+
+> Q. Run kmeans and cluster into 3 groups and plot the results?
+
+```{r}
+k2<- kmeans(x,centers = 3, nstart=20)
+k2
+plot(x,col=k2$cluster)
+```
+
+The big limitations of kmeans is that it imposes a structure on your data (it will force your data to fit what you told it to, aka. not real). Process requires arbitrarily but systematically (manually) applying until you find the best one.
+
+# Hierarchical clustering
+
+The main function in "base" R for this is called `hclust()`. It wants a distance matric as input not the data itself.
+
+We can calculate a distance matrix in lots of different ways but here we will use the `dist()` function.
+
+```{r}
+dist_x<- dist(x)
+# dist_x
+hc<-hclust(dist_x)
+# hc
+```
+
+There is a specific method to graphing hierarchical clustering. Try plotting it as is and see what the result is.
+
+```{r}
+plot(hc)
+```
+
+This shows you all the possible clusters based off your data, thereby not forcing your data into anything but takes it by the distance of each point from each other.
+
+Lets learn how to cut your tree to get desired clusters. To get the cluster membership vector (equivalent of k\$cluster in kmeans), we cut the tree at a given height we choose. The function to do this is called `cutree()`.
+
+```{r}
+cutree(hc,h=9) 
+# h cuts based off the height you pick in graph where k cuts based off the cluster you want
+```
+
+```{r}
+cutree(hc,k=2) 
+```
+
+```{r}
+grps<-cutree(hc,k=2)
+```
+
+> Q. Plot our data (`x`) colored by our hclust result.
+
+```{r}
+plot(x, col=grps)
+```
+
+# Principal Component Analysis (PCA): PCAs function by calculating new variables that represent the components of your data that account for the most variation.
+
+Each quadrant represents a portion of the dataset and what is captured. However, quadrants are arbitrary and do not actually represent numbers or categories, but new variables of variance within your dataset (ie. quadrant 1 has data that meets variance 1, and quadrant 2 has data that meets variance 2).
+
+The motivation is trying to reduce the number of things to look at to gain insight of your data while only losing a small amount of information.
+
+Lets use a real data set to understand PCA:
+
+```{r}
+url <- "https://tinyurl.com/UK-foods"
+x <- read.csv(url, row.names = 1)
+```
+
+> Q1. How many rows and columns are in your new data frame named x? What R functions could you use to answer this questions?
+
+```{r}
+dim(x)
+```
+
+> Q2. Which approach to solving the ‘row-names problem’ mentioned above do you prefer and why? Is one approach more robust than another under certain circumstances?
+
+I prefer the reading in to the CSV file as it is straight forward and less work.
+
+```{r}
+barplot(as.matrix(x), beside=T, col=rainbow(nrow(x)))
+```
+
+> Q3: Changing what optional argument in the above barplot() function results in the following plot?
+
+```{r}
+barplot(as.matrix(x), beside=F, col=rainbow(nrow(x)))
+```
+
+> Q5: Generating all pairwise plots may help somewhat. Can you make sense of the following code and resulting figure? What does it mean if a given point lies on the diagonal for a given plot?
+
+```{r}
+pairs(x, col=rainbow(10), pch=16) 
+```
+
+> Q6. What is the main differences between N. Ireland and the other countries of the UK in terms of this data-set?
+
+N. Ireland eats much more potatoes and less fresh fruit than the other UK countries. 
+
+## Enter PCA
+
+The main function to do PCA in "base" R is called `prcomp()`.
+
+It wants our foots as the columns and the countries as the rows.
+
+`t()` transposes data (needed for this dataset)
+
+`prcomp()` calculates the principal components of data
+
+```{r}
+pca <- prcomp(t(x))
+summary(pca)
+```
+
+```{r}
+attributes(pca)
+```
+
+```{r}
+pca$x
+```
+
+```{r}
+pca$rotation
+```
+
+```{r}
+plot(pca$x[,1],pca$x[,2],xlab="PC1 67.44%",ylab="PC2 29.05%", col=c("orange","red","blue","darkgreen"),pch=15)
+text(pca$x[,1], pca$x[,2], colnames(x))
+abline(h=0, col="gray", lty=2)
+abline(v=0, col="gray", lty=2)
+```
+> Q8. Customize your plot so that the colors of the country names match the colors in our UK and Ireland map and table at start of this document.
+
+```{r}
+plot(pca$x[,1],pca$x[,2],xlab="PC1 67.44%",ylab="PC2 29.05%", col=c("orange","red","blue","darkgreen"))
+text(pca$x[,1], pca$x[,2], colnames(x), col=c("orange","red","blue","darkgreen"))
+abline(h=0, col="gray", lty=2)
+abline(v=0, col="gray", lty=2)
+```
+We can manually calculate the variance here using the standard deviation. 
+```{r}
+v <- round( pca$sdev^2/sum(pca$sdev^2) * 100 )
+v
+```
+We can use the `summary()` function to do the same. Given in the second row. 
+```{r}
+z <- summary(pca)
+z$importance
+```
+```{r}
+barplot(v, xlab="Principal Component", ylab="Percent Variation")
+```
+

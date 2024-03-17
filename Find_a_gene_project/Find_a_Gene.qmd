@@ -1,0 +1,117 @@
+---
+title: "Find a Gene project: ECT2 homologs"
+author: "Andrew Sue"
+format: pdf
+editor: visual
+---
+First must upload all my fasta file sequences being used to compare. Use Bio3d package 
+
+```{r}
+library(bio3d)
+```
+
+#Read in fasta files
+
+Read in fasta files with designated variable 
+
+```{r}
+novel_mouse_protein <- read.fasta("novel_protein_mus_musculus.fasta")
+human_ECT2_query <- read.fasta("ECT2_human_protein.fasta")
+night_monkey_homolog <- read.fasta("night_monkey.fasta")
+elephant_seal_homo <- read.fasta("southern_elephant_seal.fasta")
+mole_rat_homo <- read.fasta("blind_mole_rat_ect2.fasta")
+am_pika_homo <- read.fasta("american_pika_ect2.fasta")
+mouse_ear_bat_homo <- read.fasta("ect2_greater_mouse_ear_bat.fasta")
+```
+
+```{r}
+attributes(novel_mouse_protein)
+# head(novel_mouse_protein)
+# print(novel_mouse_protein$ali)
+```
+
+```{r}
+seqs <- seqbind(novel_mouse_protein, human_ECT2_query, night_monkey_homolog, elephant_seal_homo, mole_rat_homo, am_pika_homo, mouse_ear_bat_homo)
+
+seqcomb <- read.fasta("muscle-I20240314-211828-0990-91231778-p1m-fa.txt")
+attributes(seqcomb)
+seqcomb$id
+seqcomb
+```
+
+
+```{r}
+seq_dist <- seqidentity(seqcomb)
+seq_dist <- as.matrix(seq_dist)
+```
+
+```{r}
+library(ggplot2)
+library(fields)
+heatmap(seq_dist, margins = c(12,12), scale= "none") 
+  # legend(x="right", legend = )
+
+heatmap(seq_dist, margins = c(12,12), 
+        col = colorRampPalette(c("blue", "white", "red"))(100),  # Choose your color palette
+        legend = TRUE,                                           # Add legend
+        scale = "none"                                         # Specify no scaling
+)
+
+image.plot(legend.only=TRUE, col = colorRampPalette(c("blue", "white", "red"))(100), zlim=c(0.7, 1))
+```
+
+```{r}
+cseq <- consensus(seqcomb$ali, 0.1)
+cseq
+```
+
+```{r}
+blast_human <- blast.pdb(human_ECT2_query)
+top_hits <- blast_human$hit.tbl[1:3,]
+```
+
+```{r}
+plot.blast(blast_human)
+```
+
+```{r}
+pdb_human <- pdb.annotate(top_hits$subjectids)
+pdb_human$subjectids <- row.names(pdb_human)
+```
+
+```{r}
+library(dplyr)
+library(tidyverse)
+
+human_all <- inner_join(blast_human$hit.tbl[1:3,], pdb_human)
+human_all
+
+human_all_q <- human_all[c(1:3,11,19:22,24,27)]
+human_all_q
+```
+
+```{r}
+files <- get.pdb(human_all_q$subjectids[1], path="pdbs", split=TRUE, gzip=TRUE)
+```
+
+```{r}
+library(pheatmap)
+
+pheatmap(seq_dist)
+```
+
+```{r}
+# library(dplyr)
+# seq_dist %>% 
+#   row.wise() %>% 
+#   mutate(max = max(novel_mouse_protein, human_ECT2_query, mole_rat_homo, night_monkey_homolog, am_pika_homo, mouse_ear_bat_homo, elephant_seal_homo))
+```
+
+```{r}
+con_seq <- data.frame(cseq$seq)
+ 
+consensus <- paste(con_seq[1:974,1], sep = "")
+result <- paste(con_seq$cseq.seq, collapse = "")
+result
+```
+
