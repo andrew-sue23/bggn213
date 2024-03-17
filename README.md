@@ -1,7 +1,7 @@
 ## Andrew's work 
 Classwork repository for BGGN 213 Bioinformatics course at UC San Diego.
 
-#Contents
+# Contents
 
 -Class 5: [Data viz with ggplot]()  
 -Class 6: [R functions]()  
