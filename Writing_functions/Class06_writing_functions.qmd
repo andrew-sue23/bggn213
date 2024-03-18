@@ -1,6 +1,6 @@
 ---
 title: "Writing_Functions_Class06"
-format: pdf
+format: markdown_github
 author: "Andrew Sue PID: A13006809"
 date: 01/26/24
 ---

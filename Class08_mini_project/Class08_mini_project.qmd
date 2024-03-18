@@ -1,7 +1,7 @@
 ---
 title: "Class 8: Mini Project"
 author: "Andrew Sue"
-format: pdf
+format: markdown_github
 editor: visual
 ---
 
@@ -15,17 +15,19 @@ fna.data <- read.csv("WisconsinCancer.csv", row.names=1)
 wisc.df <- fna.data
 ```
 
-> Q1. How many observations/samples/patients/rows? 
+> Q1. How many observations/samples/patients/rows?
 
 There are `r nrow(wisc.df)` individuals in this dataset.
 
-> Q2. What is in the `$diagnosis` column? How many of each type? 
+> Q2. What is in the `$diagnosis` column? How many of each type?
 
-There are `r table(wisc.df$diagnosis)`. 
+There are `r table(wisc.df$diagnosis)`.
+
 ```{r}
 table(wisc.df$diagnosis)
 ```
-> Q3. How many variables/features in the data are suffixed with _mean?
+
+> Q3. How many variables/features in the data are suffixed with \_mean?
 
 ```{r}
 #gives you column indexes
@@ -37,23 +39,29 @@ grep("_mean",colnames(wisc.df), value=TRUE)
 #Gives you the number of values as it counts 
 length(grep("_mean",colnames(wisc.df), value=TRUE))
 ```
-> Q. How many variables/dimensions have we? 
+
+> Q. How many variables/dimensions have we?
 
 ```{r}
 ncol(wisc.df)
 ```
+
 Save the diagnosis for reference later.
+
 ```{r}
 #Factors useful for categorical data and provides levels to data. 
 diagnosis <- as.factor(wisc.df$diagnosis)
 diagnosis
 ```
- Remove or exclude this column from any of our analysis
+
+Remove or exclude this column from any of our analysis
+
 ```{r}
 wisc.data <- wisc.df[,-1]
 head(wisc.data)
 ```
-Lets try clustering this data: 
+
+Lets try clustering this data:
 
 ```{r}
 wisc.hc<-hclust(dist(wisc.data))
@@ -62,7 +70,7 @@ plot(wisc.hc)
 
 #Principal Component Analysis
 
-Let's try PCA on this data. Before doing any analysis like this we should check if our input data needs to be scaled first? Scaling in data for PCA is important as PCA looks at variance, thus a category with the largest variance within it will dominate PCA. 
+Let's try PCA on this data. Before doing any analysis like this we should check if our input data needs to be scaled first? Scaling in data for PCA is important as PCA looks at variance, thus a category with the largest variance within it will dominate PCA.
 
 ```{r}
 # Check column means and standard deviations
@@ -70,7 +78,9 @@ colMeans(wisc.data)
 
 apply(wisc.data,2,sd)
 ```
-Use mtcars dataframe as an example of anaylsis with small dataset. 
+
+Use mtcars dataframe as an example of anaylsis with small dataset.
+
 ```{r}
 pc <- prcomp(mtcars)
 summary(pc)
@@ -84,48 +94,56 @@ biplot(pc)
 pc.scale <- prcomp(mtcars,scale =TRUE)
 biplot(pc.scale)
 ```
->Q. Do we need to scale out cancer data set?
 
-Yes we do! If you look at the standard deviation between the variance is too large to compare. 
+> Q. Do we need to scale out cancer data set?
+
+Yes we do! If you look at the standard deviation between the variance is too large to compare.
 
 ```{r}
 wisc.pr <- prcomp(wisc.data, scale=TRUE)
 ```
 
-How well do the PCs capture the variance? 
+How well do the PCs capture the variance?
+
 ```{r}
 summary(wisc.pr)
 ```
+
 > Q4. From your results, what proportion of the original variance is captured by the first principal components (PC1)?
 
-44.27% of original variance is calculated in PC1. 
+44.27% of original variance is calculated in PC1.
 
 > Q5. How many principal components (PCs) are required to describe at least 70% of the original variance in the data?
 
-The first 3 PCs are required to get 70% of the variance. 
+The first 3 PCs are required to get 70% of the variance.
 
 > Q6. How many principal components (PCs) are required to describe at least 90% of the original variance in the data?
 
-You need 7 PCs to get 90% of the variance. 
+You need 7 PCs to get 90% of the variance.
 
 ```{r}
 biplot(wisc.pr)
 ```
+
 > Q7. What stands out to you about this plot? Is it easy or difficult to understand? Why?
 
-This plot is unreadable and not useful as everything is on top of each other. This is because it is graphing all of the categories rather than the most principal components. 
-
+This plot is unreadable and not useful as everything is on top of each other. This is because it is graphing all of the categories rather than the most principal components.
 
 Our main PC score plot (a.k.a PC plot, PC1 vs PC2, ordination plot).
+
 ```{r}
 attributes(wisc.pr)
 ```
-We need to build our own plot here: 
+
+We need to build our own plot here:
+
 ```{r}
 plot(wisc.pr$x[,1], wisc.pr$x[,2],col=diagnosis)
 # wisc.pr$x
 ```
-Make a nice ggplot version of plot 
+
+Make a nice ggplot version of plot
+
 ```{r}
 pc <-as.data.frame(wisc.pr$x)
 library(ggplot2)
@@ -133,9 +151,11 @@ ggplot(pc) +
   aes(PC1, PC2, col=diagnosis) +
   geom_point()
 ```
+
 > Q8. Generate a similar plot for principal components 1 and 3. What do you notice about these plots?
 
-While they are similar, there is slightly less variance within the PC1 and PC3 than the previous. Which makes sense since PC3 has less influence than PC2. 
+While they are similar, there is slightly less variance within the PC1 and PC3 than the previous. Which makes sense since PC3 has less influence than PC2.
+
 ```{r}
 pc <-as.data.frame(wisc.pr$x)
 library(ggplot2)
@@ -143,19 +163,22 @@ ggplot(pc) +
   aes(PC1, PC3, col=diagnosis) +
   geom_point()
 ```
+
 Make scree plot of variance
+
 ```{r}
 wisc.scree<-summary(wisc.pr)
 # wisc.scree
 barplot(wisc.scree$importance[2,]*100) #graphing only proportion variance
 ```
+
 ```{r}
 #factoextra package automatically calculates variance within it (doing what you did above for you)
 library(factoextra)
 fviz_eig(wisc.pr, addlabels = TRUE)
 ```
 
-> Q9. For the first principal component, what is the component of the loading vector (i.e. wisc.pr$rotation[,1]) for the feature concave.points_mean? This tells us how much this original feature contributes to the first PC.
+> Q9. For the first principal component, what is the component of the loading vector (i.e. wisc.pr\$rotation\[,1\]) for the feature concave.points_mean? This tells us how much this original feature contributes to the first PC.
 
 It is contributing 1.6% to the original PC1. (Category/Dimension 8)
 
@@ -166,9 +189,11 @@ data.scaled <-scale(wisc.data)
 data.dist <-dist(data.scaled)
 wisc.hclust<- hclust(data.dist,method ="complete")
 ```
+
 > Q10. Using the plot() and abline() functions, what is the height at which the clustering model has 4 clusters?
 
 Height = 19
+
 ```{r}
 plot(wisc.hclust)
 abline(h=19,col="red", lty=2)
@@ -177,11 +202,13 @@ abline(h=19,col="red", lty=2)
 This exercise will help you determine if, in this case, hierarchical clustering provides a promising new feature.
 
 Use `cutree()` to cut the tree so that it has 4 clusters. Assign the output to the variable wisc.hclust.clusters.
+
 ```{r}
 wisc.hclust.clusters <- cutree(wisc.hclust, 4)
 table(wisc.hclust.clusters, diagnosis)
 plot(wisc.hclust.clusters)
 ```
+
 > Q11. OPTIONAL: Can you find a better cluster vs diagnoses match by cutting into a different number of clusters between 2 and 10? How do you judge the quality of your result in each case?
 
 In this case, it would be visually inspecting the tree and/or calling the predicted diagnosis to the actual to see if you are become farther due to the cuts. using the complete method, cutting at 4 seems to make the most sense.
@@ -194,9 +221,10 @@ plot(wisc.hclust.clusters1)
 
 > Q12. Which method gives your favorite results for the same data.dist dataset? Explain your reasoning.
 
-ward.D2 is better as it clustered better and minimized the variance between better. 
+ward.D2 is better as it clustered better and minimized the variance between better.
 
 # Using 3 PCs
+
 We start with using 3 PCs
 
 ```{r}
@@ -208,12 +236,14 @@ plot(wisc.pr.hclust)
 plot(wisc.pr.hclust)
 abline(h=80, col="red") #abline just draws a line across
 ```
+
 ```{r}
 grps<- cutree(wisc.pr.hclust, h=80)
 table(grps)
 
 table(grps, diagnosis)
 ```
+
 ```{r}
 #url <- "new_samples.csv"
 url <- "https://tinyurl.com/new-samples-CSV"
@@ -221,7 +251,6 @@ new <- read.csv(url)
 npc <- predict(wisc.pr, newdata=new)
 npc
 ```
-
 
 ```{r}
 plot(wisc.pr$x[,1:2], col=diagnosis)
@@ -231,4 +260,4 @@ text(npc[,1], npc[,2], c(1,2), col="white")
 
 > Q16. Which of these new patients should we prioritize for follow up based on your results?
 
-We would prioritize patient 2 given that is falls within the malignant side. 
+We would prioritize patient 2 given that is falls within the malignant side.

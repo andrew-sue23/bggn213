@@ -1,10 +1,11 @@
 ---
 title: "Class 14: RNAseq mini project"
 author: "Andrew Sue"
-format: pdf
+format: markdown_github
 editor: visual
 ---
-## Data import 
+
+## Data import
 
 Must import data (metadate and counts)
 
@@ -18,7 +19,7 @@ head(counts)
 head(metadata)
 ```
 
-## Data exploration and format confirmation 
+## Data exploration and format confirmation
 
 Now lets confirm data is in the right order/format to associate between files.
 
@@ -35,11 +36,11 @@ countData <- counts[,-1]
 all(colnames(countData) == metadata$id)
 ```
 
-## Setup for DESeq2 
+## Setup for DESeq2
 
-Now lets pre-filter the data and remove all the zero data. 
+Now lets pre-filter the data and remove all the zero data.
 
->Q. Complete the code below to filter countData to exclude genes (i.e. rows) where we have 0 read count across all samples (i.e. columns).
+> Q. Complete the code below to filter countData to exclude genes (i.e. rows) where we have 0 read count across all samples (i.e. columns).
 
 ```{r}
 inds <- rowSums(countData) > 0 #takes the indexees of nonzero values
@@ -53,7 +54,7 @@ Lets look at the number of genes left.
 nrow(non.zero.counts)
 ```
 
-## DESeq analysis 
+## DESeq analysis
 
 ```{r}
 #/ message: false #This removes the library load message from appearing
@@ -64,7 +65,7 @@ library(DESeq2)
 dds <- DESeqDataSetFromMatrix(non.zero.counts, metadata, ~condition) #Design is what the colData reperesents to the countData
 ```
 
-## Result extraction and visualization 
+## Result extraction and visualization
 
 ```{r}
 dds <- DESeq(dds)
@@ -92,7 +93,7 @@ ggplot(res2) +
   theme_classic()
 ```
 
-Lets add color to it. We cannot set variables to it as there is no distinguishing category to actually be able to set default colors. Therefore, we must make our own color settings. 
+Lets add color to it. We cannot set variables to it as there is no distinguishing category to actually be able to set default colors. Therefore, we must make our own color settings.
 
 ```{r}
 mycols <- rep("gray", nrow(res2)) #make entire dataframe one color to start
@@ -108,7 +109,8 @@ ggplot(res2) +
 ```
 
 # Annotation
-Now we want to know what the points are. So we need to annotate our data using the `AnnotationDBI` and our database package that it will pull from. 
+
+Now we want to know what the points are. So we need to annotate our data using the `AnnotationDBI` and our database package that it will pull from.
 
 ```{r}
 library(AnnotationDbi)
@@ -119,7 +121,7 @@ library(org.Hs.eg.db)
 columns(org.Hs.eg.db) #These are all the databases useable to reference
 ```
 
-We can use these "columns" within `mapIds()` function to translate the ENS IDs into what we want. 
+We can use these "columns" within `mapIds()` function to translate the ENS IDs into what we want.
 
 ```{r}
 res2$symbol <- mapIds(org.Hs.eg.db,
@@ -164,7 +166,7 @@ library(gage)
 library(gageData)
 ```
 
-Gage function wants as input of a vector, in this case, fold changes with names of the genes in a format that matches the database/geneset we are going to use. 
+Gage function wants as input of a vector, in this case, fold changes with names of the genes in a format that matches the database/geneset we are going to use.
 
 ```{r}
 data(kegg.sets.hs)
@@ -235,9 +237,9 @@ lapply(gobpres, head)
 
 ## Reactome analysis
 
-We need a list of genes as a text file for using the reactome online site 
+We need a list of genes as a text file for using the reactome online site
 
-Let's start with our genes that haev a abs(logFC) > 2 and a P-value < 0.05.
+Let's start with our genes that haev a abs(logFC) \> 2 and a P-value \< 0.05.
 
 ```{r}
 inds <- abs(res2$log2FoldChange) > 2 & (res2$padj < 0.05)

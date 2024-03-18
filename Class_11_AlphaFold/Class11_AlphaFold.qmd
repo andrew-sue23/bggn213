@@ -1,17 +1,17 @@
 ---
 title: "Class 11: Alpha Fold"
 author: "Andrew Sue (PID: A13006809)"
-format: pdf
+format: markdown_github
 editor: visual
 ---
 
-#Alpha Fold 
+#Alpha Fold
 
-AlphaFold is a new bioinformatics tool developed by DeepMind that uses AI to predict protein structure - with high reliability! 
+AlphaFold is a new bioinformatics tool developed by DeepMind that uses AI to predict protein structure - with high reliability!
 
-We can run AlphaFold on our own computers by installing it or we can run on GoogleColab (without needing to install anything) via: https://github.com/sokrypton/ColabFold. To run locally, it is simply a matter of copying the code from above and putting it directly into R. 
+We can run AlphaFold on our own computers by installing it or we can run on GoogleColab (without needing to install anything) via: https://github.com/sokrypton/ColabFold. To run locally, it is simply a matter of copying the code from above and putting it directly into R.
 
-If you run the it on Google Colab, you will get a zip folder. Make sure to move it into your project folder to make it accessible. 
+If you run the it on Google Colab, you will get a zip folder. Make sure to move it into your project folder to make it accessible.
 
 Since it is a folder, we need to be able to read it in. Use below:
 
@@ -24,7 +24,7 @@ list.files(path=pth)
 
 The .a3m file is your multiple sequence alignment (MSA) file in the AlphaFold output.
 
-Now we want to return a single file or file of interest. The `list.files()` function has an argument `pattern =` that we can use to do so. To get the full path and be able to actually open file, you need to call or find the path. Use another argument `full.names =` and set as `TRUE`. 
+Now we want to return a single file or file of interest. The `list.files()` function has an argument `pattern =` that we can use to do so. To get the full path and be able to actually open file, you need to call or find the path. Use another argument `full.names =` and set as `TRUE`.
 
 ```{r}
 aln.file <- list.files(path=pth, pattern = ".a3m", full.names = TRUE)
@@ -35,30 +35,31 @@ library(bio3d)
 # to.upper arguments converts all the letters to uppercase. 
 aln <- read.fasta(aln.file, to.upper = TRUE)
 ```
+
 ```{r}
 attributes(aln)
 ```
 
-This is a big alignment / large FASTA file. Not worth printing. So use dim to get overall picture. 
+This is a big alignment / large FASTA file. Not worth printing. So use dim to get overall picture.
 
 ```{r}
 dim(aln$ali)
 ```
 
-Lets calculate sum summary info such as conservation scores. 
+Lets calculate sum summary info such as conservation scores.
 
 ```{r}
 #conserv is a function within the Bio3D package. 
 sim <- conserv(aln)
 ```
 
-Highest values (1) shows the location of conservation of amino acids. 
+Highest values (1) shows the location of conservation of amino acids.
 
 ```{r}
 plot(sim, typ = "h")
 ```
 
-We can summarize the conserved column (the ones with high scores above) via a consensus sequence. 
+We can summarize the conserved column (the ones with high scores above) via a consensus sequence.
 
 ```{r}
 #default cutoff is 0.6, which might be too low. There are multiple outputs, so call just the $seq to get the highest conserved amino acids. 
@@ -67,15 +68,15 @@ consensus(aln, cutoff = 0.9)$seq
 
 Read all out structure files into R
 
-Read the PAE (predicted alignment error files) into R to make sense of the different multichain models. These are stored in the .json files. 
+Read the PAE (predicted alignment error files) into R to make sense of the different multichain models. These are stored in the .json files.
 
-The PAE from AlphaFold is a metric for the reliability of protein structure predictions. 
+The PAE from AlphaFold is a metric for the reliability of protein structure predictions.
 
 ```{r}
 library(jsonlite)
 ```
 
-Now we need to find out json files. There are multiple json files so make sure you are reading into the right ones. We will cheat below but you can use this syntax to modify and call files `.*model.*\\.json` where the `*` means anything before. 
+Now we need to find out json files. There are multiple json files so make sure you are reading into the right ones. We will cheat below but you can use this syntax to modify and call files `.*model.*\\.json` where the `*` means anything before.
 
 ```{r}
 pae.files<- list.files(path=pth, pattern = "000.json", full.names = TRUE)
@@ -90,7 +91,7 @@ pae1 <- read_json(pae.files[1], simplifyVector = TRUE)
 dim(pae1$pae)
 ```
 
-This is a good predicted alignment. Low PAE score. 
+This is a good predicted alignment. Low PAE score.
 
 ```{r}
 plot.dmat(pae1$pae)
@@ -110,7 +111,7 @@ plot.dmat(pae1$pae,
           zlim=c(0,30))
 ```
 
-To visualize the predicted structures like you would in Molstar, we can customize the parameters here like we would there. 
+To visualize the predicted structures like you would in Molstar, we can customize the parameters here like we would there.
 
 In this section we will read the results of the more complicated HIV-Pr dimer AlphaFold2 models into R with the help of the `Bio3D` package. You can do the same thing for the monomer models if you wish but again they will be less interesting as the monomer is not physiologically relevant.
 
@@ -123,7 +124,7 @@ For tidiness we can move our AlphaFold results directory into our RStudio projec
 pth
 ```
 
-Our visualized predicted structures are stored in the PDB files within the output. So select them as we did above. 
+Our visualized predicted structures are stored in the PDB files within the output. So select them as we did above.
 
 ```{r}
 # File names for all PDB models
@@ -203,7 +204,7 @@ core.inds <- print(core, vol=0.5)
 xyz <- pdbfit(pdbs, core.inds, outpath="corefit_structures")
 ```
 
-The resulting superposed coordinates are written to a new director called `corefit_structures/`. We can now open these in Mol* and color by the Atom Property of Uncertainty/Disorder (i.e. the B-factor column that contains the pLDDT scores Figure 19):
+The resulting superposed coordinates are written to a new director called `corefit_structures/`. We can now open these in Mol\* and color by the Atom Property of Uncertainty/Disorder (i.e. the B-factor column that contains the pLDDT scores Figure 19):
 
 Now we can examine the RMSF between positions of the structure. RMSF is an often used measure of conformational variance along the structure:
 
@@ -214,9 +215,9 @@ plotb3(rf, sse=reference_pdb)
 abline(v=100, col="gray", ylab="RMSF")
 ```
 
-Here we see that the first chain is largely very similar across the different models. However, the second chain is much more variable - we saw this in Mol* previously (Figure 19).
+Here we see that the first chain is largely very similar across the different models. However, the second chain is much more variable - we saw this in Mol\* previously (Figure 19).
 
-For a final visualization of these functionally important sites we can map this conservation score to the Occupancy column of a PDB file for viewing in molecular viewer programs such as Mol*, PyMol, VMD, chimera etc.
+For a final visualization of these functionally important sites we can map this conservation score to the Occupancy column of a PDB file for viewing in molecular viewer programs such as Mol\*, PyMol, VMD, chimera etc.
 
 ```{r}
 m1.pdb <- read.pdb(pdb_files[1])
@@ -224,4 +225,4 @@ occ <- vec2resno(c(sim[1:99], sim[1:99]), m1.pdb$atom$resno)
 write.pdb(m1.pdb, o=occ, file="m1_conserv.pdb")
 ```
 
-Here is an image of this data generated from and Mol* using coloring by Occupancy. This is done in a similar manor to the pLDDT coloring procedure detailed above (Figure 20).
+Here is an image of this data generated from and Mol\* using coloring by Occupancy. This is done in a similar manor to the pLDDT coloring procedure detailed above (Figure 20).

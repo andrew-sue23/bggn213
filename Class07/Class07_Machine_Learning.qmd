@@ -1,6 +1,6 @@
 ---
 title: "Class 7: Machine Learning"
-format: pdf
+format: markdown_github
 editor: visual
 ---
 
@@ -163,7 +163,7 @@ pairs(x, col=rainbow(10), pch=16)
 
 > Q6. What is the main differences between N. Ireland and the other countries of the UK in terms of this data-set?
 
-N. Ireland eats much more potatoes and less fresh fruit than the other UK countries. 
+N. Ireland eats much more potatoes and less fresh fruit than the other UK countries.
 
 ## Enter PCA
 
@@ -198,6 +198,7 @@ text(pca$x[,1], pca$x[,2], colnames(x))
 abline(h=0, col="gray", lty=2)
 abline(v=0, col="gray", lty=2)
 ```
+
 > Q8. Customize your plot so that the colors of the country names match the colors in our UK and Ireland map and table at start of this document.
 
 ```{r}
@@ -206,17 +207,21 @@ text(pca$x[,1], pca$x[,2], colnames(x), col=c("orange","red","blue","darkgreen")
 abline(h=0, col="gray", lty=2)
 abline(v=0, col="gray", lty=2)
 ```
-We can manually calculate the variance here using the standard deviation. 
+
+We can manually calculate the variance here using the standard deviation.
+
 ```{r}
 v <- round( pca$sdev^2/sum(pca$sdev^2) * 100 )
 v
 ```
-We can use the `summary()` function to do the same. Given in the second row. 
+
+We can use the `summary()` function to do the same. Given in the second row.
+
 ```{r}
 z <- summary(pca)
 z$importance
 ```
+
 ```{r}
 barplot(v, xlab="Principal Component", ylab="Percent Variation")
 ```
-

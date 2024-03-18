@@ -1,7 +1,7 @@
 ---
 title: "Class 18: CMI PB Project"
 author: "Andrew Sue"
-format: pdf
+format: markdown_github
 editor: visual
 ---
 
@@ -81,13 +81,13 @@ head(subject)
 table(subject$infancy_vac)
 ```
 
->Q. How many Male/Female 
+> Q. How many Male/Female
 
 ```{r}
 table(subject$biological_sex)
 ```
 
->Q. How about race by gender?
+> Q. How about race by gender?
 
 ```{r}
 table(subject$race, subject$biological_sex)
@@ -116,13 +116,13 @@ ab_titer <- read_json("https://www.cmi-pb.org/api/v4/plasma_ab_titer", simplifyV
 head(ab_titer)
 ```
 
->Q. How many different Ab isotypes are there? 
+> Q. How many different Ab isotypes are there?
 
 ```{r}
 table(ab_titer$isotype)
 ```
 
->Q. How many antigens are there? 
+> Q. How many antigens are there?
 
 ```{r}
 table(ab_titer$antigen)
@@ -150,7 +150,7 @@ ggplot(abdata) +
   facet_wrap(vars(visit), nrow=2)
 ```
 
-Lets use dplyr to filter for PT and look only there. 
+Lets use dplyr to filter for PT and look only there.
 
 ```{r}
 PT_data <- abdata %>% filter(isotype == "IgG", antigen == "PT", dataset == "2021_dataset")
@@ -177,4 +177,3 @@ ggplot(PT2022_data) +
   geom_point() + 
   geom_line()
 ```
-

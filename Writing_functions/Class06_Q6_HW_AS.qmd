@@ -1,10 +1,12 @@
 ---
 title: "Class06_Homework_Q6_Protein_Function"
 author: "Andrew Sue"
-format: pdf
+format: markdown_github
 editor: visual
 ---
+
 ## Q6. How would you generalize the original code above to work with any set of input
+
 protein structures?
 
 ```{r}
@@ -22,6 +24,7 @@ plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
 plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
 plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
 ```
+
 ```{r}
 protein_fun <- function(x) {
   s1 <- read.pdb(x)
@@ -31,9 +34,8 @@ protein_fun <- function(x) {
 protein_fun("4AKE")
 ```
 
-Here is a random PDB structure from the PDB database. 
+Here is a random PDB structure from the PDB database.
+
 ```{r}
 protein_fun("6GWV")
 ```
-
-
