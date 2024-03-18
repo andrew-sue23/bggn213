@@ -1,11 +1,16 @@
-# Andrew's work 
+# Andrew's Bioinformatics Work
 Classwork repository for BGGN 213 Bioinformatics course at UC San Diego.
 
-## Contents:
+## Index of Material:
+
+**Introductory material: Working with R** 
 
 - Class 5: [Data vizualization with ggplot]()  
-- Class 6: [R functions]()  
+- Class 6: [Writing functions]()  
 - Class 7: [Machine learning with R]()
+
+**Using R and other tools for Bioinformatics Analysis**
+
 - Class 8: [Wisconsin Cancer mini project]()
 - Class 9: [Halloween Candy mini project]()
 - Class 10: [Structural Bioinformatics]()
