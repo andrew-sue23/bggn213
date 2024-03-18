@@ -1,7 +1,7 @@
 ---
 title: "Class 13: Transcriptomics"
 author: "Andrew Sue"
-format: pdf
+format: markdown_github
 editor: visual
 ---
 
