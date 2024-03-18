@@ -5,9 +5,9 @@ Classwork repository for BGGN 213 Bioinformatics course at UC San Diego.
 
 **Introductory material: Working with R** 
 
-- Class 5: [Data vizualization with ggplot](https://github.com/andrew-sue23/bggn213/tree/main/Class07)  
-- Class 6: [Writing functions]()  
-- Class 7: [Machine learning with R]()
+- Class 5: [Data vizualization with ggplot](https://github.com/andrew-sue23/bggn213/tree/main/class05)  
+- Class 6: [Writing functions](https://github.com/andrew-sue23/bggn213/tree/main/Writing_functions)  
+- Class 7: [Machine learning with R](https://github.com/andrew-sue23/bggn213/tree/main/Class07)
 
 **Using R and other tools for Bioinformatics Analysis**
 
